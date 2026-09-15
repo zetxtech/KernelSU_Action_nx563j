@@ -1,0 +1,13 @@
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index c4478abd..68e92dba 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -118,7 +118,7 @@ static const char * const task_state_array[] = {
+ 	"S (sleeping)",		/*   1 */
+ 	"D (disk sleep)",	/*   2 */
+ 	"T (stopped)",		/*   4 */
+-	"t (tracing stop)",	/*   8 */
++	"S (sleeping)",		/*   8 */
+ 	"X (dead)",		/*  16 */
+ 	"Z (zombie)",		/*  32 */
+ };
