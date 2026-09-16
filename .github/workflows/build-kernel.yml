@@ -25,6 +25,7 @@ jobs:
         echo "CLANG_VERSION=$(cat config.env | grep "CLANG_VERSION" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
         echo "BUILD_EXTRA_COMMAND=$(cat config.env | grep "EXTRA_BUILD_COMMAND" | head -n 1 | cut -d ":" -f 2)" >> $GITHUB_ENV
         echo "USE_KERNELSU=$(cat config.env | grep "USE_KERNELSU" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
+        echo "KERNELSU_VERSION=$(cat config.env | grep "KERNELSU_VERSION" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
         echo "MAKE_BOOT_IMAGE=$(cat config.env | grep "MAKE_BOOT_IMAGE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
         echo "BOOT_SIGNATURE=$(cat config.env | grep "BOOT_SIGNATURE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
         echo "SOURCE_BOOT_IMAGE=$(cat config.env | grep "SOURCE_BOOT_IMAGE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
@@ -45,7 +46,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         mkdir clang-aosp
-        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main-kernel-build-2023/clang-${{ env.CLANG_VERSION }}.tar.gz
+        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android15-qpr2-release/clang-${{ env.CLANG_VERSION }}.tar.gz
         tar -C clang-aosp/ -zxvf clang-${{ env.CLANG_VERSION }}.tar.gz
         mkdir gcc-aosp
         wget https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz -O gcc-aosp.tar.gz
@@ -87,8 +88,8 @@ jobs:
       if: env.USE_KERNELSU == 'true'
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        echo "UPLOADNAME=-KernelSU" >> $GITHUB_ENV
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/${KERNELSU_VERSION}/kernel/setup.sh" | bash -s "${KERNELSU_VERSION}"
+        echo "UPLOADNAME=-KernelSU-${KERNELSU_VERSION}" >> $GITHUB_ENV
 
     # Anti-ptrace procfs patches, applied after KernelSU (they touch only fs/proc)
     - name: Apply anti-ptrace patches

@@ -21,8 +21,10 @@ KERNEL_DEFCONFIG="$(load_cfg KERNEL_DEFCONFIG)"
 TARGET_ARCH="$(load_cfg TARGET_ARCH)"
 KERNEL_FILE="$(load_cfg KERNEL_FILE)"
 CLANG_VERSION="$(load_cfg CLANG_VERSION)"
-BUILD_EXTRA_COMMAND="$(load_cfg EXTRA_BUILD_COMMAND | cut -d: -f2)"
+# EXTRA_BUILD_COMMAND uses a colon separator in config.env (like the CI parser)
+BUILD_EXTRA_COMMAND="$(grep '^EXTRA_BUILD_COMMAND' "${REPO}/config.env" | head -n 1 | cut -d: -f2-)"
 USE_KERNELSU="$(load_cfg USE_KERNELSU)"
+KERNELSU_VERSION="$(load_cfg KERNELSU_VERSION)"
 MAKE_BOOT_IMAGE="$(load_cfg MAKE_BOOT_IMAGE)"
 BOOT_SIGNATURE="$(load_cfg BOOT_SIGNATURE)"
 SOURCE_BOOT_IMAGE="${BOOT_IMAGE_URL:-$(load_cfg SOURCE_BOOT_IMAGE)}"
@@ -32,7 +34,7 @@ echo "==> Config: source=${KERNEL_SOURCE} branch=${KERNEL_SOURCE_BRANCH} defconf
 # --- Toolchains ------------------------------------------------------
 mkdir -p clang-aosp gcc-aosp gcc32-aosp
 echo "==> Downloading clang-${CLANG_VERSION}"
-wget -q "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main-kernel-build-2023/clang-${CLANG_VERSION}.tar.gz" -O clang.tar.gz
+wget -q "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android15-qpr2-release/clang-${CLANG_VERSION}.tar.gz" -O clang.tar.gz
 tar -C clang-aosp -zxf clang.tar.gz
 echo "==> Downloading GCC toolchains"
 wget -q "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz" -O gcc.tar.gz
@@ -57,9 +59,9 @@ fi
 
 # --- KernelSU --------------------------------------------------------
 if [ "${USE_KERNELSU}" = "true" ]; then
-    echo "==> Setting up KernelSU"
+    echo "==> Setting up KernelSU ${KERNELSU_VERSION}"
     cd android-kernel
-    curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+    curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/${KERNELSU_VERSION}/kernel/setup.sh" | bash -s "${KERNELSU_VERSION}"
     cd "${WS}"
 fi
 
