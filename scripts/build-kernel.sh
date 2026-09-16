@@ -32,9 +32,23 @@ SOURCE_BOOT_IMAGE="${BOOT_IMAGE_URL:-$(load_cfg SOURCE_BOOT_IMAGE)}"
 echo "==> Config: source=${KERNEL_SOURCE} branch=${KERNEL_SOURCE_BRANCH} defconfig=${KERNEL_DEFCONFIG}"
 
 # --- Toolchains ------------------------------------------------------
+download_verified() {
+    local url="$1" out="$2"
+    for i in 1 2 3 4 5; do
+        wget -q -c --tries=3 --timeout=60 -O "${out}" "${url}" || true
+        if gzip -t "${out}" 2>/dev/null; then
+            echo "Download OK (attempt ${i}): ${out}"
+            return 0
+        fi
+        echo "Truncated download (attempt ${i}), retrying..."
+        rm -f "${out}"
+        sleep 5
+    done
+    return 1
+}
 mkdir -p clang-aosp gcc-aosp gcc32-aosp
 echo "==> Downloading clang-${CLANG_VERSION}"
-wget -q "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android15-qpr2-release/clang-${CLANG_VERSION}.tar.gz" -O clang.tar.gz
+download_verified "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android15-qpr2-release/clang-${CLANG_VERSION}.tar.gz" clang.tar.gz
 tar -C clang-aosp -zxf clang.tar.gz
 echo "==> Downloading GCC toolchains"
 wget -q "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz" -O gcc.tar.gz

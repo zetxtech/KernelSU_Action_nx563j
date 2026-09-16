@@ -10,9 +10,23 @@ KERNEL_SRC=${KERNEL_SRC:-/kernel-src}
 cd "${WS}"
 
 echo "==> Downloading toolchains"
+download_verified() {
+    local url="$1" out="$2"
+    for i in 1 2 3 4 5; do
+        wget -q -c --tries=3 --timeout=60 -O "${out}" "${url}" || true
+        if gzip -t "${out}" 2>/dev/null; then
+            echo "Download OK (attempt ${i}): ${out}"
+            return 0
+        fi
+        echo "Truncated download (attempt ${i}), retrying..."
+        rm -f "${out}"
+        sleep 5
+    done
+    return 1
+}
 if [ ! -x clang-aosp/bin/clang ]; then
     mkdir -p clang-aosp gcc-aosp gcc32-aosp
-    wget -q "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android15-qpr2-release/clang-r536225.tar.gz" -O clang.tar.gz
+    download_verified "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android15-qpr2-release/clang-r536225.tar.gz" clang.tar.gz
     tar -C clang-aosp -zxf clang.tar.gz
     wget -q "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz" -O gcc.tar.gz
     tar -C gcc-aosp -zxf gcc.tar.gz

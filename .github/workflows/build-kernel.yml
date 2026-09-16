@@ -45,9 +45,25 @@ jobs:
     - name: Download Clang-aosp Gcc-aosp Gcc32-aosp
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
+        # googlesource streams can be truncated over the runner egress proxy;
+        # verify gzip integrity and retry until the archive is complete.
+        download_verified() {
+            local url="$1" out="$2"
+            for i in 1 2 3 4 5; do
+                wget -c -q --tries=3 --timeout=60 -O "${out}" "${url}" || true
+                if gzip -t "${out}" 2>/dev/null; then
+                    echo "Download OK (attempt $i): ${out}"
+                    return 0
+                fi
+                echo "Truncated download (attempt $i), retrying..."
+                rm -f "${out}"
+                sleep 5
+            done
+            return 1
+        }
         mkdir clang-aosp
-        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android15-qpr2-release/clang-${{ env.CLANG_VERSION }}.tar.gz
-        tar -C clang-aosp/ -zxvf clang-${{ env.CLANG_VERSION }}.tar.gz
+        download_verified https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android15-qpr2-release/clang-${{ env.CLANG_VERSION }}.tar.gz clang.tar.gz
+        tar -C clang-aosp/ -zxvf clang.tar.gz
         mkdir gcc-aosp
         wget https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz -O gcc-aosp.tar.gz
         tar -C gcc-aosp/ -zxvf gcc-aosp.tar.gz
